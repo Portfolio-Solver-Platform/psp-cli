@@ -1,0 +1,22 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "psp-cli"
+version = "0.1.0"
+description = "CLI for the Portfolio Solver Platform"
+requires-python = ">=3.11"
+dependencies = [
+    "typer>=0.12",
+    "rich>=13",
+    "requests>=2.32",
+    "joserfc>=1.6",
+    "tomli-w>=1.0",
+]
+
+[project.scripts]
+psp = "psp.main:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/psp"]
