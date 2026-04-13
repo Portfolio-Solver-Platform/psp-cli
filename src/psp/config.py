@@ -1,3 +1,4 @@
+import os
 import tomllib
 import tomli_w
 from pathlib import Path
@@ -20,13 +21,26 @@ DEFAULTS: dict = {
 }
 
 
+ENV_OVERRIDES = {
+    "PSP_BASE_URL": "base_url",
+    "PSP_CLIENT_ID": "client_id",
+    "PSP_CLIENT_SECRET": "client_secret",
+}
+
+
 def load() -> dict:
     CONFIG_DIR.mkdir(parents=True, exist_ok=True)
     if not CONFIG_FILE.exists():
-        return dict(DEFAULTS)
-    with open(CONFIG_FILE, "rb") as f:
-        data = tomllib.load(f)
-    return DEFAULTS | data
+        cfg = dict(DEFAULTS)
+    else:
+        with open(CONFIG_FILE, "rb") as f:
+            data = tomllib.load(f)
+        cfg = DEFAULTS | data
+    for env_key, cfg_key in ENV_OVERRIDES.items():
+        val = os.environ.get(env_key)
+        if val is not None:
+            cfg[cfg_key] = val
+    return cfg
 
 
 def save(data: dict) -> None:
