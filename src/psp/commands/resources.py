@@ -21,17 +21,18 @@ def get_defaults(json_output: Annotated[bool, typer.Option("--json")] = False):
 
 @defaults_app.command("set")
 def set_defaults(
-    per_user_cpu: Annotated[float, typer.Option()],
-    per_user_memory: Annotated[float, typer.Option()],
-    global_max_cpu: Annotated[float, typer.Option()],
-    global_max_memory: Annotated[float, typer.Option()],
+    per_user_cpu: Annotated[Optional[float], typer.Option()] = None,
+    per_user_memory: Annotated[Optional[float], typer.Option()] = None,
+    global_max_cpu: Annotated[Optional[float], typer.Option()] = None,
+    global_max_memory: Annotated[Optional[float], typer.Option()] = None,
     json_output: Annotated[bool, typer.Option("--json")] = False,
 ):
+    current = client.get("/resources/defaults").json()
     data = client.put("/resources/defaults", json={
-        "per_user_cpu_cores": per_user_cpu,
-        "per_user_memory_gib": per_user_memory,
-        "global_max_cpu_cores": global_max_cpu,
-        "global_max_memory_gib": global_max_memory,
+        "per_user_cpu_cores": per_user_cpu if per_user_cpu is not None else current["per_user_cpu_cores"],
+        "per_user_memory_gib": per_user_memory if per_user_memory is not None else current["per_user_memory_gib"],
+        "global_max_cpu_cores": global_max_cpu if global_max_cpu is not None else current["global_max_cpu_cores"],
+        "global_max_memory_gib": global_max_memory if global_max_memory is not None else current["global_max_memory_gib"],
     }).json()
     if json_output:
         output.as_json(data)

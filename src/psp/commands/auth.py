@@ -1,4 +1,5 @@
 import time
+from typing import Annotated, Optional
 import typer
 import psp.config as config
 from psp.auth.core import Auth
@@ -9,9 +10,10 @@ app = typer.Typer()
 
 
 @app.command()
-def login():
+def login(secret: Annotated[Optional[str], typer.Option("--secret", help="Client secret (required for confidential clients such as admin-app)")] = None):
     cfg = config.load()
-    auth = Auth(config.oidc_metadata_url(), cfg["client_id"], cfg["client_secret"])
+    client_secret = secret if secret is not None else cfg["client_secret"]
+    auth = Auth(config.oidc_metadata_url(), cfg["client_id"], client_secret)
     access_token, refresh_token, access_expires_at, refresh_expires_at = device_auth_run(auth, cfg["scope"])
     store.save(access_token, refresh_token, access_expires_at, refresh_expires_at)
     typer.echo("Logged in successfully.")
