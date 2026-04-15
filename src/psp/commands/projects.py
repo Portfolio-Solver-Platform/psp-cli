@@ -1,7 +1,10 @@
 import json
+import time
 from pathlib import Path
 from typing import Annotated, Optional
 import typer
+from rich.live import Live
+from rich.spinner import Spinner
 import psp.client as client
 import psp.output as output
 
@@ -53,11 +56,27 @@ def config_get(
         output.record(data, title=f"Project {project_id[:8]}… Config")
 
 
+def _wait_for_finish(project_id: str, interval: float = 5.0) -> None:
+    with Live(Spinner("dots", text="Waiting for project to finish…"), transient=True):
+        while True:
+            data = client.get(f"/projects/{project_id}/status").json()
+            status = data.get("status", {})
+            if isinstance(status, str):
+                status = json.loads(status)
+            if status.get("isFinished"):
+                return
+            time.sleep(interval)
+
+
 @app.command()
 def results(
     project_id: str,
     output_file: Annotated[Optional[Path], typer.Option("--output", "-o")] = None,
+    wait: Annotated[bool, typer.Option("--wait", "-w", help="Poll until the project is finished, then fetch results.")] = False,
 ):
+    if wait:
+        _wait_for_finish(project_id)
+
     r = client.get(f"/projects/{project_id}/solution", stream=True)
     if output_file:
         with open(output_file, "wb") as f:
